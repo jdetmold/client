@@ -121,6 +121,8 @@ AccountSettings::AccountSettings(AccountState *accountState, QWidget *parent) :
 
     connect(ui->_folderList, SIGNAL(clicked(const QModelIndex &)),
             this, SLOT(slotFolderListClicked(const QModelIndex&)));
+    connect(ui->_folderList, SIGNAL(pressed(const QModelIndex &)),
+            this, SLOT(slotFolderListMousePressed(const QModelIndex&)));
 
     connect(ui->selectiveSyncApply, SIGNAL(clicked()), _model, SLOT(slotApplySelectiveSync()));
     connect(ui->selectiveSyncCancel, SIGNAL(clicked()), _model, SLOT(resetFolders()));
@@ -261,9 +263,30 @@ void AccountSettings::slotCustomContextMenuRequested(const QPoint &pos)
     menu->exec(tv->mapToGlobal(pos));
 }
 
+void AccountSettings::slotFolderListMousePressed(const QModelIndex& indx)
+{
+    if ((QGuiApplication::mouseButtons() & Qt::RightButton)
+            && _model->classify(indx) == FolderStatusModel::SubFolder) {
+        QTreeView *tv = ui->_folderList;
+        QMenu *menu = new QMenu(tv);
+        menu->setAttribute(Qt::WA_DeleteOnClose);
+
+        QAction *ac = menu->addAction(tr("Open folder"));
+        connect(ac, SIGNAL(triggered(bool)), this, SLOT(slotOpenCurrentLocalSubFolder()));
+
+        QString fileName = _model->data( indx, FolderStatusDelegate::FolderPathRole ).toString();
+        if (!QFile::exists(fileName)) {
+            ac->setEnabled(false);
+        }
+
+        menu->exec(QCursor::pos());
+    }
+}
+
 void AccountSettings::slotFolderListClicked(const QModelIndex& indx)
 {
     if (indx.data(FolderStatusDelegate::AddButton).toBool()) {
+        // "Add Folder Sync Connection"
         if (indx.flags() & Qt::ItemIsEnabled) {
             slotAddFolder();
         } else {
@@ -401,6 +424,16 @@ void AccountSettings::slotOpenCurrentFolder()
     if( !alias.isEmpty() ) {
         emit openFolderAlias(alias);
     }
+}
+
+void AccountSettings::slotOpenCurrentLocalSubFolder()
+{
+    QModelIndex selected = ui->_folderList->selectionModel()->currentIndex();
+    if( !selected.isValid() )
+        return;
+    QString fileName = _model->data( selected, FolderStatusDelegate::FolderPathRole ).toString();
+    QUrl url = QUrl::fromLocalFile(fileName);
+    QDesktopServices::openUrl(url);
 }
 
 void AccountSettings::showConnectionLabel( const QString& message, QStringList errors )

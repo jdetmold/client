@@ -75,7 +75,8 @@ protected slots:
     void slotScheduleCurrentFolderForceRemoteDiscovery();
     void slotForceSyncCurrentFolder();
     void slotRemoveCurrentFolder();
-    void slotOpenCurrentFolder();
+    void slotOpenCurrentFolder(); // sync folder
+    void slotOpenCurrentLocalSubFolder(); // selected subfolder in sync folder
     void slotFolderWizardAccepted();
     void slotFolderWizardRejected();
     void slotDeleteAccount();
@@ -85,6 +86,7 @@ protected slots:
     void refreshSelectiveSyncStatus();
     void slotCustomContextMenuRequested(const QPoint&);
     void slotFolderListClicked( const QModelIndex& indx );
+    void slotFolderListMousePressed( const QModelIndex& indx );
     void doExpand();
     void slotLinkActivated(const QString &link);
 
